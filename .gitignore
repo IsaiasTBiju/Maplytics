@@ -11,9 +11,10 @@ venv/
 .env
 *.env.local
 
-# Data (we'll add specific exceptions later as needed)
+# Data (raw/working files excluded, but final site exports ARE tracked)
 *.csv
 *.geojson
+!site/data/*.geojson
 pipeline/data/raw/
 pipeline/data/processed/
 
