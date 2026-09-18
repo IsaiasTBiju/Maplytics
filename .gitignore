@@ -24,3 +24,5 @@ dist/
 # Editor
 .vscode/
 .idea/
+
+pipeline/cache/
