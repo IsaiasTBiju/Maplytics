@@ -1,0 +1,15 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: maplytics-db
+    environment:
+      POSTGRES_USER: maplytics
+      POSTGRES_PASSWORD: maplytics_dev
+      POSTGRES_DB: maplytics
+    ports:
+      - "5433:5432"
+    volumes:
+      - maplytics_pgdata:/var/lib/postgresql/data
+
+volumes:
+  maplytics_pgdata:
