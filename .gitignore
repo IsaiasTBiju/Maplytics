@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment/secrets
+.env
+*.env.local
+
+# Data (we'll add specific exceptions later as needed)
+*.csv
+*.geojson
+pipeline/data/raw/
+pipeline/data/processed/
+
+# Node (for the frontend, once we get there)
+node_modules/
+dist/
+
+# Editor
+.vscode/
+.idea/
