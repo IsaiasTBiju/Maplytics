@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Maplytics — Gender Inclusivity in Dubai</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+  html, body { margin: 0; height: 100%; font-family: -apple-system, sans-serif; }
+  #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+  #panel {
+    position: absolute; top: 12px; left: 12px; z-index: 1;
+    background: white; padding: 14px 16px; border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); width: 260px;
+  }
+  #panel h1 { font-size: 16px; margin: 0 0 4px; }
+  #panel p.subtitle { font-size: 12px; color: #555; margin: 0 0 12px; }
+
+  #panel label { font-size: 13px; display: block; margin: 8px 0 4px; font-weight: 600; }
+  #panel select { width: 100%; padding: 4px; font-size: 13px; }
+
+  #legend { margin-top: 12px; font-size: 12px; }
+  #legend .row { display: flex; align-items: center; margin: 3px 0; }
+  #legend .swatch { width: 14px; height: 14px; margin-right: 6px; border-radius: 2px; flex-shrink: 0; }
+
+  #popup { font-size: 13px; }
+  #popup table { border-collapse: collapse; }
+  #popup td { padding: 2px 6px 2px 0; }
+</style>
+</head>
+<body>
+
+<div id="panel">
+  <h1>Maplytics</h1>
+  <p class="subtitle">Gender Inclusivity Score — Dubai pilot districts</p>
+
+  <label for="metric-select">Show layer</label>
+  <select id="metric-select">
+    <option value="gius">Composite GIUS</option>
+    <option value="walkability_norm">Walkability</option>
+    <option value="services_norm">Access to services</option>
+    <option value="transit_norm">Transit access</option>
+    <option value="cluster">Inclusivity typology (cluster)</option>
+  </select>
+
+  <div id="legend"></div>
+</div>
+
+<div id="map"></div>
+
+<script>
+const map = new maplibregl.Map({
+  container: "map",
+  style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  center: [55.27, 25.20],
+  zoom: 10.5
+});
+
+map.addControl(new maplibregl.NavigationControl(), "top-right");
+
+// Color ramps
+const scoreColors = ["#fde0dd", "#fa9fb5", "#c51b8a", "#7a0177"]; // light -> dark, low -> high
+const scoreStops = [0, 0.33, 0.66, 1];
+
+const clusterColors = {
+  0: "#fdae61", // transit-served, low walkability/services
+  1: "#66c2a5", // walkable, service-poor, good transit
+  2: "#d73027", // universally underserved
+  3: "#1a9850"  // high inclusivity core
+};
+const clusterLabels = {
+  0: "Transit-served, low walkability/services",
+  1: "Walkable, service-poor, good transit",
+  2: "Universally underserved",
+  3: "High inclusivity core"
+};
+
+function buildFillExpression(metric) {
+  if (metric === "cluster") {
+    return [
+      "match", ["get", "cluster"],
+      0, clusterColors[0],
+      1, clusterColors[1],
+      2, clusterColors[2],
+      3, clusterColors[3],
+      "#cccccc"
+    ];
+  }
+  return [
+    "interpolate", ["linear"], ["get", metric],
+    scoreStops[0], scoreColors[0],
+    scoreStops[1], scoreColors[1],
+    scoreStops[2], scoreColors[2],
+    scoreStops[3], scoreColors[3]
+  ];
+}
+
+function updateLegend(metric) {
+  const el = document.getElementById("legend");
+  if (metric === "cluster") {
+    el.innerHTML = Object.entries(clusterLabels).map(([k, label]) =>
+      `<div class="row"><div class="swatch" style="background:${clusterColors[k]}"></div>${label}</div>`
+    ).join("");
+  } else {
+    el.innerHTML = `
+      <div class="row"><div class="swatch" style="background:${scoreColors[0]}"></div>Low (0.0)</div>
+      <div class="row"><div class="swatch" style="background:${scoreColors[1]}"></div>Below average</div>
+      <div class="row"><div class="swatch" style="background:${scoreColors[2]}"></div>Above average</div>
+      <div class="row"><div class="swatch" style="background:${scoreColors[3]}"></div>High (1.0)</div>
+    `;
+  }
+}
+
+map.on("load", () => {
+  map.addSource("cells", {
+    type: "geojson",
+    data: "data/grid_cells.geojson"
+  });
+
+  map.addLayer({
+    id: "cells-fill",
+    type: "fill",
+    source: "cells",
+    paint: {
+      "fill-color": buildFillExpression("gius"),
+      "fill-opacity": 0.75
+    }
+  });
+
+  map.addLayer({
+    id: "cells-outline",
+    type: "line",
+    source: "cells",
+    paint: {
+      "line-color": "#ffffff",
+      "line-width": 0.3,
+      "line-opacity": 0.4
+    }
+  });
+
+  updateLegend("gius");
+
+  // Fit map to data bounds
+  fetch("data/grid_cells.geojson")
+    .then(r => r.json())
+    .then(data => {
+      const bounds = new maplibregl.LngLatBounds();
+      data.features.forEach(f => {
+        const coords = f.geometry.coordinates[0];
+        coords.forEach(c => bounds.extend(c));
+      });
+      map.fitBounds(bounds, { padding: 30 });
+    });
+
+  // Layer switcher
+  document.getElementById("metric-select").addEventListener("change", (e) => {
+    const metric = e.target.value;
+    map.setPaintProperty("cells-fill", "fill-color", buildFillExpression(metric));
+    updateLegend(metric);
+  });
+
+  // Click popup
+  map.on("click", "cells-fill", (e) => {
+    const p = e.features[0].properties;
+    const html = `
+      <div id="popup">
+        <strong>${p.district}</strong> — cell ${p.cell_id}<br/>
+        <table>
+          <tr><td>GIUS</td><td><b>${p.gius}</b></td></tr>
+          <tr><td>Walkability</td><td>${p.walkability_norm}</td></tr>
+          <tr><td>Services</td><td>${p.services_norm}</td></tr>
+          <tr><td>Transit</td><td>${p.transit_norm}</td></tr>
+          <tr><td>Cluster</td><td>${clusterLabels[p.cluster]}</td></tr>
+        </table>
+      </div>`;
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
+  map.on("mouseenter", "cells-fill", () => map.getCanvas().style.cursor = "pointer");
+  map.on("mouseleave", "cells-fill", () => map.getCanvas().style.cursor = "");
+});
+</script>
+
+</body>
+</html>
