@@ -3,9 +3,8 @@ from db import get_engine
 
 engine = get_engine()
 
-# Load the final clustered results
 gdf = gpd.read_postgis(
-    "SELECT cell_id, district, gius, walkability_norm, services_norm, transit_norm, cluster, geom FROM grid_cells_clustered",
+    "SELECT cell_id, district, gius, walkability_norm, services_norm, transit_norm, diversity_norm, cluster, geom FROM grid_cells_clustered",
     engine,
     geom_col="geom"
 )

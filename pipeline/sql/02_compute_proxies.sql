@@ -60,3 +60,19 @@ SELECT
     ROUND(AVG(transit_raw)::numeric, 1) AS avg_transit_dist_m
 FROM grid_cells
 GROUP BY district;
+
+-- 4. Trip-chaining proxy: land-use diversity (distinct POI categories within 400m)
+ALTER TABLE grid_cells ADD COLUMN IF NOT EXISTS diversity_raw double precision;
+
+ALTER TABLE pois ADD COLUMN IF NOT EXISTS category text;
+UPDATE pois SET category = COALESCE(amenity, shop, leisure);
+
+UPDATE grid_cells gc
+SET diversity_raw = sub.category_count
+FROM (
+    SELECT gc2.cell_id, COUNT(DISTINCT p.category) AS category_count
+    FROM grid_cells gc2
+    LEFT JOIN pois p ON ST_DWithin(ST_Centroid(gc2.geom_utm), p.geom_utm, 400)
+    GROUP BY gc2.cell_id
+) sub
+WHERE gc.cell_id = sub.cell_id;

@@ -9,13 +9,13 @@ engine = get_engine()
 
 # Load grid cells with normalized proxies
 gdf = gpd.read_postgis(
-    "SELECT cell_id, district, gius, walkability_norm, services_norm, transit_norm, geom FROM grid_cells",
+    "SELECT cell_id, district, gius, walkability_norm, services_norm, transit_norm, diversity_norm, geom FROM grid_cells",
     engine,
     geom_col="geom"
 )
 
 # Features for clustering: the 3 normalized proxies (not the composite GIUS itself)
-features = gdf[["walkability_norm", "services_norm", "transit_norm"]].copy()
+features = gdf[["walkability_norm", "services_norm", "transit_norm", "diversity_norm"]].copy()
 
 # Standardize (mean 0, std 1) -- good practice for k-means even though our
 # features are already 0-1, since it ensures equal influence during clustering
@@ -47,7 +47,7 @@ km = KMeans(n_clusters=K, random_state=42, n_init=10)
 gdf["cluster"] = km.fit_predict(X)
 
 # Interpret clusters: average proxy values per cluster
-cluster_summary = gdf.groupby("cluster")[["walkability_norm", "services_norm", "transit_norm", "gius"]].mean()
+cluster_summary = gdf.groupby("cluster")[["walkability_norm", "services_norm", "transit_norm", "diversity_norm", "gius"]].mean()
 cluster_summary["num_cells"] = gdf.groupby("cluster").size()
 cluster_summary = cluster_summary.sort_values("gius", ascending=False)
 
@@ -59,6 +59,6 @@ print("\n--- District x Cluster breakdown ---")
 print(pd.crosstab(gdf["district"], gdf["cluster"]))
 
 # Save clustered data back to PostGIS for later export/mapping
-gdf_to_save = gdf[["cell_id", "district", "gius", "walkability_norm", "services_norm", "transit_norm", "cluster", "geom"]]
+gdf_to_save = gdf[["cell_id", "district", "gius", "walkability_norm", "services_norm", "transit_norm", "diversity_norm", "cluster", "geom"]]
 gdf_to_save.to_postgis("grid_cells_clustered", engine, if_exists="replace", index=False)
 print("\nSaved clustered results to grid_cells_clustered table")

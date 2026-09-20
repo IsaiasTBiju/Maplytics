@@ -10,9 +10,9 @@ from db import get_engine
 # districts have clean administrative polygons in OSM.
 
 DISTRICTS = {
-    "deira": (55.28, 25.24, 55.35, 25.30),
-    "dubai_marina": (55.125, 25.065, 55.150, 25.092),
-    "mirdif": (55.395, 25.195, 55.445, 25.240),
+    "deira": (55.265334, 25.2327936, 55.345334, 25.3127936),
+    "dubai_marina": (55.1235844, 25.0642641, 55.1551429, 25.0950402),
+    "mirdif": (55.4028121, 25.2056186, 55.4424026, 25.2352206),
 }
 
 POI_TAGS = {
@@ -47,7 +47,7 @@ def fetch_district(name, bbox):
     boundary.to_file(f"{RAW_DIR}/{name}_boundary.geojson", driver="GeoJSON")
     print(f"  boundary: bbox saved")
 
-        # osmnx 2.x expects bbox as (west, south, east, north) -- same order we stored it in
+    # osmnx 2.x expects bbox as (west, south, east, north) -- same order we stored it in
     ox_bbox = (west, south, east, north)
 
     # 2. Road network -> nodes + edges as GeoDataFrames

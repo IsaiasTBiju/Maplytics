@@ -42,6 +42,7 @@
     <option value="walkability_norm">Walkability</option>
     <option value="services_norm">Access to services</option>
     <option value="transit_norm">Transit access</option>
+    <option value="diversity_norm">Trip-chaining (land-use diversity)</option>
     <option value="cluster">Inclusivity typology (cluster)</option>
   </select>
 
@@ -172,6 +173,7 @@ map.on("load", () => {
           <tr><td>Walkability</td><td>${p.walkability_norm}</td></tr>
           <tr><td>Services</td><td>${p.services_norm}</td></tr>
           <tr><td>Transit</td><td>${p.transit_norm}</td></tr>
+          <tr><td>Trip-chaining</td><td>${p.diversity_norm}</td></tr>
           <tr><td>Cluster</td><td>${clusterLabels[p.cluster]}</td></tr>
         </table>
       </div>`;
