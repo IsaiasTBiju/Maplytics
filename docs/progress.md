@@ -41,6 +41,14 @@
 - Interactive MapLibre dashboard (`site/index.html`) — 5 layers (GIUS, 4 proxies,
   cluster typology), live and deployed via GitHub Actions (`.github/workflows/deploy.yml`)
 
+- Added 4th district: Downtown Dubai (dense, transit-rich, service-thin — distinct
+  profile from the other 3). Final ranking: Downtown Dubai 0.443 > Dubai Marina 0.420
+  > Deira 0.406 > Mirdif 0.273
+  - Cluster finding: Downtown Dubai has 0% of cells in BOTH the top and bottom
+    typologies — entirely "middling" clusters (62.4% moderate-good, 37.6% moderate-poor)
+    — a genuinely distinct pattern vs the other 3 districts, showing the same average
+    GIUS can arise from very different underlying spatial patterns (polarized vs uniform)
+
 ## Next steps
 - Methodology write-up (`docs/methodology.md`)
 - Generalizability discussion (what's Dubai-specific vs portable elsewhere)
